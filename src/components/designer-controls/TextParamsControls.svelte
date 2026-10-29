@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { ensureFontReady } from "$/utils/builtin_fonts";
   import * as fabric from "fabric";
   import { tr } from "$/utils/i18n";
   import MdIcon from "$/components/basic/MdIcon.svelte";
@@ -54,8 +55,10 @@
     valueUpdated();
   };
 
-  const updateFontFamily = (v: string) => {
+  const updateFontFamily = async (v: string) => {
     selectedText.set({ fontFamily: v });
+    valueUpdated();
+    await ensureFontReady(selectedText);
     valueUpdated();
   };
 
@@ -99,17 +102,6 @@
     selectedText.set({ backgroundColor: value });
     valueUpdated();
   };
-
-  const editInPopup = () => {
-    const text = prompt($tr("params.text.edit.title"), selectedText.text);
-    if (text !== null) {
-      selectedText.set({ text });
-      selectedText.isEditing = false;
-      valueUpdated();
-    }
-  };
-
-
 </script>
 
 <!-- Fix component not updating when selectedText changes. I didn't find a better way to do this. -->
@@ -269,9 +261,6 @@
 
 <FontFamilyPicker {editRevision} value={selectedText.fontFamily} valueUpdated={updateFontFamily} />
 
-<button class="btn btn-sm btn-secondary" onclick={editInPopup} title={$tr("params.text.edit")}>
-  <MdIcon icon="edit" />
-</button>
 
 <style>
   .input-group {

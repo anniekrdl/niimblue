@@ -62,9 +62,9 @@
   <AppModal title={$tr("fonts.title")} bind:show>
     <div class="mb-1">
       {#each $userFonts as font (font.family)}
-        <div class="input-group input-group-sm mb-1">
-          <span class="input-group-text fs-5" style="font-family: {font.family}">{font.family}</span>
-          <button class="btn btn-sm btn-danger" onclick={() => removeFont(font.family)}>
+        <div class="font-row">
+          <span class="font-name" style="font-family: {font.family}">{font.family}</span>
+          <button class="btn btn-sm btn-outline-danger" onclick={() => removeFont(font.family)}>
             <MdIcon icon="delete" />
           </button>
         </div>
@@ -75,18 +75,21 @@
 
     <hr />
 
-    <div class="input-group input-group-sm">
-      <span class="input-group-text">{$tr("fonts.add")}</span>
+    <div class="text-secondary mb-2">{$tr("fonts.add")}</div>
 
-      <select class="form-select" bind:value={selectExt}>
+    <div class="d-flex gap-2 mb-2">
+      <select class="form-select type-select" bind:value={selectExt}>
         <option value="ttf">ttf</option>
         <option value="woff2">woff2</option>
       </select>
 
-      <input type="text" class="form-control w-25" placeholder={$tr("fonts.title_override")} bind:value={overrideFamily} />
-
-      <button class="btn btn-sm btn-secondary" onclick={browseFont}>{$tr("fonts.browse")}</button>
+      <input type="text" class="form-control" placeholder={$tr("fonts.title_override")} bind:value={overrideFamily} />
     </div>
+
+    <button class="btn btn-primary w-100" onclick={browseFont}>
+      <MdIcon icon="upload_file" />
+      {$tr("fonts.browse")}
+    </button>
 
     {#snippet footer()}
       <div class="text-secondary">
@@ -97,3 +100,27 @@
     {/snippet}
   </AppModal>
 {/if}
+
+<style>
+  .font-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--bs-border-color);
+  }
+
+  .font-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    font-size: 1.25rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .type-select {
+    flex: none;
+    width: 6.5em;
+  }
+</style>

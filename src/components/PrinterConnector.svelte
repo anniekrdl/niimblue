@@ -31,6 +31,9 @@
   let connectionType = $state<ConnectionType>("bluetooth");
   let featureSupport = $state<AvailableTransports>({ webBluetooth: false, webSerial: false, capacitorBle: false });
   let verboseInfoShow = $state<boolean>(false);
+  let transportCount = $derived(
+    [featureSupport.webBluetooth, featureSupport.webSerial, featureSupport.capacitorBle].filter(Boolean).length,
+  );
 
   const percentage = (cur?: number, total?: number) => {
     if (cur === undefined || total === undefined) {
@@ -266,42 +269,33 @@
       ></MdIcon>
     </span>
   {:else}
-    {#if featureSupport.webBluetooth}
-      <button
-        disabled={$connectionState === "connecting"}
-        class="btn text-nowrap {connectionType === 'bluetooth' ? 'btn-light' : 'btn-outline-secondary'}"
-        onclick={() => switchConnectionType("bluetooth")}>
-        <MdIcon icon="bluetooth" />
-        {$tr("connector.bluetooth")}
-      </button>
+    {#if transportCount > 1}
+      {#if featureSupport.webBluetooth}
+        <button
+          disabled={$connectionState === "connecting"}
+          class="btn conn-type {connectionType === 'bluetooth' ? 'active' : ''}"
+          title={$tr("connector.bluetooth")}
+          onclick={() => switchConnectionType("bluetooth")}>
+          <MdIcon icon="bluetooth" />
+        </button>
+      {/if}
+      {#if featureSupport.webSerial}
+        <button
+          disabled={$connectionState === "connecting"}
+          class="btn conn-type {connectionType === 'serial' ? 'active' : ''}"
+          title={$tr("connector.serial")}
+          onclick={() => switchConnectionType("serial")}>
+          <MdIcon icon="usb" />
+        </button>
+      {/if}
     {/if}
-    {#if featureSupport.webSerial}
-      <button
-        disabled={$connectionState === "connecting"}
-        class="btn text-nowrap {connectionType === 'serial' ? 'btn-light' : 'btn-outline-secondary'}"
-        onclick={() => switchConnectionType((connectionType = "serial"))}>
-        <MdIcon icon="usb" />
-        {$tr("connector.serial")}
-      </button>
-    {/if}
-    {#if featureSupport.capacitorBle}
-      <button
-        disabled={$connectionState === "connecting"}
-        class="btn text-nowrap {connectionType === 'capacitor-ble' ? 'btn-light' : 'btn-outline-secondary'}"
-        onclick={() => switchConnectionType((connectionType = "capacitor-ble"))}>
-        <MdIcon icon="bluetooth" />
-        {$tr("connector.bluetooth")}
-      </button>
-    {/if}
-  {/if}
 
-  {#if $connectionState !== "connected"}
     <button
-      class="btn btn-primary"
-      disabled={$connectionState === "connecting" ||
-        (!featureSupport.capacitorBle && !featureSupport.webBluetooth && !featureSupport.webSerial)}
+      class="btn connect-btn"
+      disabled={$connectionState === "connecting" || transportCount === 0}
       onclick={onConnectClicked}>
-      <MdIcon icon="power" />
+      <MdIcon icon={connectionType === "serial" ? "usb" : "bluetooth"} />
+      {$connectionState === "connecting" ? $tr("connector.connecting") : $tr("connector.connect")}
     </button>
   {/if}
 
@@ -317,6 +311,31 @@
 </div>
 
 <style>
+  .connect-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 44px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 999px !important;
+    background: var(--np-card);
+    color: var(--np-accent);
+    font-weight: 600;
+  }
+
+  .conn-type {
+    width: 40px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px !important;
+    color: var(--np-muted);
+  }
+  .conn-type.active {
+    color: var(--np-accent);
+  }
+
   .dropdown-menu {
     width: 100vw;
     max-width: 300px;

@@ -137,7 +137,7 @@
             <button
               class="btn {deleteMode ? 'btn-danger' : 'btn-light'} me-1 mb-1 user-icon"
               onclick={() => svgClicked(name, data)}>
-              <img src="data:image/svg+xml;base64,{FileUtils.base64str(data)}" alt="user-svg" />
+              <img src="data:image/svg+xml;charset=utf-8,{encodeURIComponent(data)}" alt="user-svg" loading="lazy" />
             </button>
           {/each}
         {/if}

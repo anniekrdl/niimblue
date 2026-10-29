@@ -110,7 +110,7 @@
     padding: 8px;
     border: 1px solid var(--bs-border-color);
     border-radius: 12px;
-    background: var(--np-surface);
+    background: var(--np-card);
     color: inherit;
     text-align: center;
   }

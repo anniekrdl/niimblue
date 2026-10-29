@@ -653,32 +653,38 @@
         onClick={toggleSavedProp} />
     </div>
 
-    <div class="input-group input-group-sm">
-      <span class="input-group-text">{$tr("preview.offset")}</span>
-      {#if offsetWarning}
-        <span class="input-group-text text-warning" title={offsetWarning}><MdIcon icon="warning" /></span>
-      {/if}
-      <span class="input-group-text"><MdIcon icon="unfold_more" class="r-90" /></span>
-      <input
-        class="form-control"
-        type="number"
-        bind:value={offset.x}
-        onchange={() => updateSavedProp("offset", offset, true)} />
-      <span class="input-group-text"><MdIcon icon="unfold_more" /></span>
-      <input
-        class="form-control"
-        type="number"
-        bind:value={offset.y}
-        onchange={() => updateSavedProp("offset", offset, true)} />
-      <select
-        class="form-select"
-        bind:value={offset.offsetType}
-        onchange={() => updateSavedProp("offset", offset, true)}>
-        <option value="inner">{$tr("preview.offset.inner")}</option>
-        <option value="outer">{$tr("preview.offset.outer")}</option>
-      </select>
+    <!-- two rows, on a phone the title and all fields do not fit on one line -->
+    <div class="offset-block">
+      <div class="offset-title text-secondary">{$tr("preview.offset")}</div>
+      <div class="input-group input-group-sm flex-nowrap">
+        <span class="input-group-text"><MdIcon icon="unfold_more" class="r-90" /></span>
+        <input
+          class="form-control offset-input"
+          type="number"
+          bind:value={offset.x}
+          onchange={() => updateSavedProp("offset", offset, true)} />
+        <span class="input-group-text"><MdIcon icon="unfold_more" /></span>
+        <input
+          class="form-control offset-input"
+          type="number"
+          bind:value={offset.y}
+          onchange={() => updateSavedProp("offset", offset, true)} />
+        <select
+          class="form-select offset-type"
+          bind:value={offset.offsetType}
+          onchange={() => updateSavedProp("offset", offset, true)}>
+          <option value="inner">{$tr("preview.offset.inner")}</option>
+          <option value="outer">{$tr("preview.offset.outer")}</option>
+        </select>
 
-      <ParamLockButton propName="offset" value={offset} savedValue={savedProps.offset} onClick={toggleSavedProp} />
+        <ParamLockButton propName="offset" value={offset} savedValue={savedProps.offset} onClick={toggleSavedProp} />
+      </div>
+      {#if offsetWarning}
+        <div class="offset-warning text-warning">
+          <MdIcon icon="warning" />
+          {offsetWarning}
+        </div>
+      {/if}
     </div>
 
     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{$tr("preview.close")}</button>
@@ -721,6 +727,25 @@
   }
   .progress-bar {
     transition: none;
+  }
+  .offset-block {
+    width: 100%;
+  }
+  .offset-title {
+    margin-bottom: 2px;
+    font-size: 0.85rem;
+  }
+  .offset-input {
+    min-width: 3.5em;
+  }
+  .offset-type {
+    flex: 0 0 auto;
+    width: auto;
+  }
+  .offset-warning {
+    margin-top: 4px;
+    font-size: 0.85rem;
+    white-space: pre-line;
   }
   .input-group .form-range {
     flex-grow: 1;

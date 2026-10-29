@@ -15,9 +15,10 @@
 @import "bootstrap/scss/list-group";
 @import "bootstrap/scss/spinners";
 @import "font";
+@import "@fontsource-variable/outfit/wght.css";
 
 body {
-  font-family: "Noto Sans Variable", sans-serif;
+  font-family: "Outfit Variable", "Noto Sans Variable", sans-serif;
 }
 
 .toastify.toast-danger {
@@ -42,17 +43,64 @@ body {
 
 /* ---- App layout & toolbars ---- */
 
+/* one dark theme, the accent color can be changed in the app menu */
 :root,
 [data-bs-theme="dark"] {
-  --np-surface: #2a2c31;
-  --np-stage-bg: #1b1c1f;
-  --np-stage-dot: rgba(255, 255, 255, 0.09);
+  --np-bg: #2b2e37;
+  --np-card: #22242a;
+  --np-raised: #1a1b20;
+  --np-stage-bg: #1d1e23;
+  --np-stage-dot: rgba(255, 255, 255, 0.08);
+  --np-accent: #b4a2f7;
+  --np-accent-soft: #e3dbfd;
+  --np-ink: #1e1f24;
+  --np-muted: #a7aab3;
+
+  --bs-body-bg: var(--np-bg);
+  --bs-body-color: #eceef2;
+  --bs-tertiary-bg: var(--np-card);
+  --bs-secondary-bg: var(--np-raised);
+  --bs-border-color: #3a3d46;
+  --bs-primary: var(--np-accent);
+  --bs-primary-rgb: 180, 162, 247;
+  --bs-link-color: var(--np-accent);
+  --bs-link-color-rgb: 180, 162, 247;
+  --bs-link-hover-color: var(--np-accent-soft);
+  --bs-link-hover-color-rgb: 227, 219, 253;
+  --bs-focus-ring-color: rgba(180, 162, 247, 0.35);
 }
 
-[data-bs-theme="light"] {
-  --np-surface: #f1f3f5;
-  --np-stage-bg: #e4e7eb;
-  --np-stage-dot: rgba(0, 0, 0, 0.12);
+.btn-primary {
+  --bs-btn-bg: var(--np-accent);
+  --bs-btn-border-color: var(--np-accent);
+  --bs-btn-color: var(--np-ink);
+  --bs-btn-hover-bg: var(--np-accent-soft);
+  --bs-btn-hover-border-color: var(--np-accent-soft);
+  --bs-btn-hover-color: var(--np-ink);
+  --bs-btn-active-bg: var(--np-accent-soft);
+  --bs-btn-active-border-color: var(--np-accent-soft);
+  --bs-btn-active-color: var(--np-ink);
+  --bs-btn-disabled-bg: var(--np-accent);
+  --bs-btn-disabled-border-color: var(--np-accent);
+  --bs-btn-disabled-color: var(--np-ink);
+}
+
+.form-check-input:checked {
+  background-color: var(--np-accent);
+  border-color: var(--np-accent);
+}
+
+.dropdown-menu,
+.modal-content {
+  --bs-dropdown-bg: var(--np-card);
+  --bs-modal-bg: var(--np-card);
+  --bs-dropdown-link-active-bg: var(--np-accent);
+  --bs-dropdown-link-active-color: var(--np-ink);
+  border-radius: 16px;
+}
+
+.modal-content {
+  border-radius: 24px;
 }
 
 html,
@@ -60,6 +108,7 @@ body {
   height: 100%;
   overflow: hidden;
   overscroll-behavior: none;
+  background: var(--np-bg);
 }
 
 body {
@@ -80,8 +129,7 @@ body {
     display: none;
   }
 
-  > *,
-  .tool-group > * {
+  > * {
     flex: none;
   }
 
@@ -100,40 +148,8 @@ body {
   }
 }
 
-.tool-group {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding-right: 6px;
-  border-right: 1px solid var(--bs-border-color);
-
-  &:last-child {
-    border-right: 0;
-    padding-right: 0;
-  }
-}
-
-.np-toolbar.top-tools {
-  overflow: visible;
-}
-
-.np-toolbar .tools-scroll {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.print-group {
-  margin-left: auto;
-}
-
 .tool-label {
   margin-left: 0.35rem;
-}
-
-.props-bar {
-  min-height: 48px;
 }
 
 /* mouse users can not swipe, wrap instead of horizontal scroll */
@@ -144,45 +160,127 @@ body {
   }
 }
 
-.add-bar {
-  justify-content: space-between;
-  padding: 6px;
-  border-radius: 14px;
-  background: var(--np-surface);
+/* Label / Sjablonen / Opgeslagen / Data as round chips */
+.np-tabs {
+  gap: 8px;
+  padding: 0 4px;
+
+  > .btn,
+  > .dropdown > .btn,
+  > .dropdown > .btn-group > .btn {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    padding: 0 22px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--np-card);
+    color: #fff;
+    font-size: 1.05rem;
+    font-weight: 600;
+
+    .mdi {
+      display: none;
+    }
+
+    .tool-label {
+      margin-left: 0;
+    }
+
+    &:hover,
+    &.show {
+      background: var(--np-raised);
+    }
+  }
+
+  /* the label settings are the main thing you edit */
+  > .dropdown:first-child > .btn {
+    background: var(--np-accent);
+    color: var(--np-ink);
+  }
+
+  /* data (CSV) is switched on */
+  .btn-warning {
+    box-shadow: inset 0 0 0 2px var(--np-accent);
+  }
+}
+
+/* one row of tiles in the bottom panel, swipe sideways for more */
+.add-grid {
+  display: flex;
+  gap: 8px;
+  height: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  > .btn,
+  > .dropdown {
+    flex: none;
+    width: 82px;
+  }
+
+  > .dropdown > .btn {
+    width: 100%;
+  }
 
   > .btn,
   > .dropdown > .btn {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 2px;
-    min-width: 62px;
-    padding: 6px 8px;
+    height: 100%;
+    padding: 4px 2px;
     border: 0;
-    border-radius: 12px;
-    background: transparent;
-    color: var(--bs-body-color);
+    border-radius: 16px;
+    background: var(--np-accent-soft);
+    color: var(--np-ink);
 
     &:hover,
     &:active,
     &.show {
-      background: rgba(127, 127, 127, 0.2);
+      background: var(--np-ink);
+      color: var(--np-accent);
     }
 
     .mdi {
-      font-size: 1.7rem;
+      font-size: 1.45rem;
     }
 
     .tool-label {
       margin-left: 0;
-      font-size: 0.75rem;
+      overflow: hidden;
+      max-width: 100%;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
+  }
+}
+
+/* wide screens: no swiping, and dropdowns must not be clipped by a scroll container */
+@media (min-width: 768px) {
+  .np-tabs,
+  .add-grid {
+    overflow: visible;
+  }
+
+  .add-grid > .btn,
+  .add-grid > .dropdown {
+    flex: 1 1 0;
+    width: auto;
   }
 }
 
 /* Dropdowns become bottom sheets on phones */
 @media (max-width: 767.98px) {
-  .np-toolbar .dropdown-menu.show:not(.dropdown-menu .dropdown-menu),
+  .designer .dropdown-menu.show:not(.dropdown-menu .dropdown-menu),
   .app-header .dropdown-menu.show:not(.dropdown-menu .dropdown-menu) {
     position: fixed !important;
     inset: auto 0 0 0 !important;
@@ -193,47 +291,56 @@ body {
     max-height: 75dvh;
     overflow-y: auto;
     z-index: 1055;
-    border-radius: 16px 16px 0 0;
+    border: 0;
+    border-radius: 24px 24px 0 0;
     padding-bottom: calc(1rem + env(safe-area-inset-bottom));
     box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5);
   }
 
-  /* icon with a small caption below, like the add bar */
-  .top-tools .btn-sm {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-width: 52px;
-    padding: 4px 6px;
+  .np-tabs > .btn,
+  .np-tabs > .dropdown > .btn {
+    min-height: 44px;
+    padding: 0 18px;
+    font-size: 1rem;
+  }
+}
 
-    .tool-label {
-      margin-left: 0;
-      font-size: 0.68rem;
-      line-height: 1.1;
-    }
+/* object settings in the peach panel */
+.props-bar {
+  .btn-secondary,
+  .btn-outline-secondary {
+    --bs-btn-bg: var(--np-raised);
+    --bs-btn-color: #eceef2;
+    --bs-btn-border-color: transparent;
+    --bs-btn-hover-bg: #34363e;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-bg: var(--np-accent);
+    --bs-btn-active-color: var(--np-ink);
+    --bs-btn-active-border-color: transparent;
   }
 
-  .print-group .btn-outline-primary .tool-label {
-    display: none;
+  .input-group-text,
+  .form-control,
+  .form-select {
+    background-color: var(--np-raised);
+    border-color: transparent;
   }
+}
 
-  .add-bar > .btn,
-  .add-bar > .dropdown > .btn {
-    min-width: 54px;
-    padding: 6px 4px;
+/* small screens: slightly smaller tabs */
+@media (max-height: 900px) {
+  .np-tabs > .btn,
+  .np-tabs > .dropdown > .btn {
+    min-height: 42px;
   }
+}
 
-  /* connection type buttons in the header: icon only */
-  .app-header .btn.text-nowrap {
-    font-size: 0;
+/* sliders in the accent color instead of bootstrap blue */
+.form-range::-webkit-slider-thumb {
+  background-color: var(--np-accent);
+}
 
-    .mdi {
-      font-size: 1.4rem;
-    }
-  }
-
-  .app-header .title {
-    font-size: 1.2rem;
-  }
+.form-range::-moz-range-thumb {
+  background-color: var(--np-accent);
 }

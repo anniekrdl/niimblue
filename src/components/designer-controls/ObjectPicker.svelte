@@ -18,7 +18,7 @@
 
 <div class="dropdown">
   <button class="btn btn-sm btn-secondary" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-    <MdIcon icon="format_shapes" />
+    <MdIcon icon={label ? "more_horiz" : "format_shapes"} />
     {#if label}<span class="tool-label">{label}</span>{:else}<MdIcon icon="add" />{/if}
   </button>
 

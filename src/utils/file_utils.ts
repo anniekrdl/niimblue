@@ -29,7 +29,12 @@ export class FileUtils {
   /** Convert string to base64 string */
   static base64str(str: string): string {
     const bytes = new TextEncoder().encode(str);
-    const binString = String.fromCodePoint(...bytes);
+    // in chunks, spreading a large array into one call overflows the call stack
+    const CHUNK = 0x8000;
+    let binString = "";
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      binString += String.fromCodePoint(...bytes.subarray(i, i + CHUNK));
+    }
     return btoa(binString);
   }
 

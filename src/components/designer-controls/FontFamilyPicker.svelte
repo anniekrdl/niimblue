@@ -8,6 +8,7 @@
   import { fontCache, userFonts } from "$/stores";
   import FontsMenu from "$/components/designer-controls/FontsMenu.svelte";
   import GoogleFontsBrowser from "$/components/designer-controls/GoogleFontsBrowser.svelte";
+  import { BUILTIN_FONTS } from "$/utils/builtin_fonts";
 
   interface Props {
     editRevision?: number;
@@ -23,6 +24,10 @@
 
   let systemFontsFiltered = $derived.by<string[]>(() => {
     return $fontCache.filter((e) => e.toLowerCase().includes(searchString.toLowerCase()));
+  });
+
+  let builtinFontsFiltered = $derived.by<string[]>(() => {
+    return BUILTIN_FONTS.filter((e) => e.toLowerCase().includes(searchString.toLowerCase()));
   });
 
   let userFontsFiltered = $derived.by<string[]>(() => {
@@ -88,6 +93,15 @@
         bind:value={searchString} />
     </div>
 
+    {#if builtinFontsFiltered.length > 0}
+      <h6 class="dropdown-header">{$tr("params.text.builtin_fonts")}</h6>
+      {#each builtinFontsFiltered as family (family)}
+        <button class="dropdown-item font-item" style="font-family: '{family}'" type="button" onclick={() => fontClick(family)}>
+          {family}
+        </button>
+      {/each}
+    {/if}
+
     {#if userFontsFiltered.length > 0}
       <h6 class="dropdown-header">{$tr("params.text.user_fonts")}</h6>
       {#each userFontsFiltered as family (family)}
@@ -129,6 +143,10 @@
 
   .font-family-input {
     width: 14em;
+  }
+
+  .font-item {
+    font-size: 1.3rem;
   }
 
   .dropdown-menu {

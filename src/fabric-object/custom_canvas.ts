@@ -17,6 +17,7 @@ type FoldInfo = {
   segments: FoldSegment[];
 };
 type MirrorInfo = { pos: fabric.Point; flip: boolean };
+type ClampedControl = fabric.Control & { npClamped?: boolean };
 
 export class CustomCanvas extends fabric.Canvas {
   private labelProps: LabelProps = DEFAULT_LABEL_PROPS;
@@ -29,6 +30,19 @@ export class CustomCanvas extends fabric.Canvas {
   private highlightMirror: boolean = true;
   private gridEnabled: boolean = false;
   private virtualZoomRatio: number = 1;
+  /** Selection handle sizes in screen pixels. The canvas is scaled with css, so they are divided by the zoom. */
+  private readonly HANDLE_SIZE = 16;
+  private readonly HANDLE_TOUCH_SIZE = 44;
+  private readonly HANDLE_PADDING = 10;
+  private readonly ROTATE_HANDLE_OFFSET = 30;
+  private readonly EDIT_BUTTON_SIZE = 30;
+  private readonly EDIT_BUTTON_OFFSET = 28;
+  /** Decides which objects get the edit button in the corner, and with which icon */
+  editKind?: (obj: fabric.FabricObject) => "text" | "icon" | undefined;
+  /** Called when the edit button in the corner of an object is tapped */
+  onEditRequest?: (obj: fabric.FabricObject) => void;
+  /** Tapping adds objects to the selection or removes them, like holding shift (phones have no shift key) */
+  multiSelect: boolean = false;
   onZoomChange?: (zoom: number) => void;
 
   constructor(
@@ -37,6 +51,180 @@ export class CustomCanvas extends fabric.Canvas {
   ) {
     super(el, options);
     this.preserveObjectStacking = true;
+
+    this.on("object:added", (e) => this.applyHandleStyle(e.target));
+    // selecting from code (for example after adding an icon) does not redraw by itself
+    this.on("selection:created", () => {
+      this.applyHandleStyle(this.getActiveObject());
+      this.requestRenderAll();
+    });
+    this.on("selection:updated", () => {
+      this.applyHandleStyle(this.getActiveObject());
+      this.requestRenderAll();
+    });
+  }
+
+  /** Keep selection handles the same size on screen at every zoom level, colored with the app accent */
+  private applyHandleStyle(obj?: fabric.FabricObject) {
+    if (obj === undefined) return;
+    const z = this.virtualZoomRatio;
+    const accent = getComputedStyle(document.documentElement).getPropertyValue("--np-accent").trim() || "#b4a2f7";
+    obj.set({
+      cornerSize: this.HANDLE_SIZE / z,
+      touchCornerSize: this.HANDLE_TOUCH_SIZE / z,
+      borderScaleFactor: 2 / z,
+      padding: this.HANDLE_PADDING / z,
+      cornerStyle: "circle",
+      transparentCorners: false,
+      cornerColor: accent,
+      cornerStrokeColor: "#1e1f24",
+      borderColor: "#1e1f24",
+    });
+    const rotate = obj.controls?.mtr;
+    if (rotate) rotate.offsetY = -this.ROTATE_HANDLE_OFFSET / z;
+    this.applyEditButton(obj, accent);
+    this.keepControlsInside(obj);
+    // control positions are cached, calculate them again with the new handlers
+    obj.setCoords();
+  }
+
+  /** Keep handles inside the label, otherwise they can not be reached when an object fills the whole label */
+  private keepControlsInside(obj: fabric.FabricObject) {
+    const canvas = this;
+    const controls = { ...obj.controls };
+    for (const [key, control] of Object.entries(controls)) {
+      if ((control as ClampedControl).npClamped) continue;
+      const clamped = new fabric.Control({
+        ...control,
+        positionHandler(this: fabric.Control, dim, finalMatrix, fabricObject, currentControl) {
+          const p = fabric.Control.prototype.positionHandler.call(this, dim, finalMatrix, fabricObject, currentControl);
+          const margin = (canvas.EDIT_BUTTON_SIZE / 2 + 2) / canvas.virtualZoomRatio;
+          return new fabric.Point(
+            Math.min(Math.max(p.x, margin), canvas.getWidth() - margin),
+            Math.min(Math.max(p.y, margin), canvas.getHeight() - margin),
+          );
+        },
+      }) as ClampedControl;
+      clamped.npClamped = true;
+      controls[key] = clamped;
+    }
+    obj.controls = controls;
+  }
+
+  /** Round button at the top left corner: change the text or swap the icon, the layout stays the same */
+  private applyEditButton(obj: fabric.FabricObject, accent: string) {
+    const kind = this.editKind?.(obj);
+    if (kind === undefined) {
+      if (obj.controls?.edit) {
+        obj.controls = { ...obj.controls };
+        delete obj.controls.edit;
+      }
+      return;
+    }
+
+    const z = this.virtualZoomRatio;
+    const size = this.EDIT_BUTTON_SIZE / z;
+    // own copy, controls can be shared between objects of the same class
+    obj.controls = {
+      ...obj.controls,
+      edit: new fabric.Control({
+        x: -0.5,
+        y: -0.5,
+        offsetX: -this.EDIT_BUTTON_OFFSET / z,
+        offsetY: -this.EDIT_BUTTON_OFFSET / z,
+        sizeX: size,
+        sizeY: size,
+        touchSizeX: this.HANDLE_TOUCH_SIZE / z,
+        touchSizeY: this.HANDLE_TOUCH_SIZE / z,
+        cursorStyle: "pointer",
+        actionName: "edit",
+        mouseUpHandler: () => {
+          this.onEditRequest?.(obj);
+          return true;
+        },
+        render: (ctx, left, top) => {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(left, top, size / 2, 0, Math.PI * 2);
+          ctx.fillStyle = "#1e1f24";
+          ctx.fill();
+          ctx.font = `${size * 0.62}px "Material Icons"`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillStyle = accent;
+          // "edit" pencil for text, "swap_horiz" arrows for icons
+          ctx.fillText(String.fromCodePoint(kind === "text" ? 0xe3c9 : 0xe8d4), left, top);
+          ctx.restore();
+        },
+      }),
+    };
+  }
+
+  override _isSelectionKeyPressed(e: fabric.TPointerEvent): boolean {
+    return this.multiSelect || super._isSelectionKeyPressed(e);
+  }
+
+  /**
+   * Scale an object to the label edges.
+   * Rectangles and circles are resized so their outline lies exactly on the edge, other objects keep their ratio.
+   */
+  public scaleToLabel(obj: fabric.FabricObject) {
+    const b = this.getLabelBounds();
+    const center = new fabric.Point(b.startX + b.width / 2, b.startY + b.height / 2);
+    const stroke = obj.strokeWidth ?? 0;
+
+    if (obj instanceof fabric.Rect) {
+      obj.set({ angle: 0, scaleX: 1, scaleY: 1, width: b.width - stroke, height: b.height - stroke });
+    } else if (obj instanceof fabric.Circle) {
+      obj.set({ angle: 0, scaleX: 1, scaleY: 1, radius: (Math.min(b.width, b.height) - stroke) / 2 });
+    } else {
+      const rect = obj.getBoundingRect();
+      const factor = Math.min(b.width / rect.width, b.height / rect.height);
+      obj.set({ scaleX: obj.scaleX * factor, scaleY: obj.scaleY * factor });
+    }
+
+    obj.setPositionByOrigin(center, "center", "center");
+    obj.setCoords();
+    this.requestRenderAll();
+  }
+
+  /** Align the selected objects to each other: their left edges, centers, right edges and so on */
+  public alignSelection(how: "left" | "center_h" | "right" | "top" | "center_v" | "bottom") {
+    const objects = this.getActiveObjects();
+    if (objects.length < 2) return;
+
+    // objects inside a selection have coordinates relative to it, release them first
+    this.discardActiveObject();
+
+    const rects = objects.map((o) => o.getBoundingRect());
+    const minX = Math.min(...rects.map((r) => r.left));
+    const maxX = Math.max(...rects.map((r) => r.left + r.width));
+    const minY = Math.min(...rects.map((r) => r.top));
+    const maxY = Math.max(...rects.map((r) => r.top + r.height));
+
+    objects.forEach((o, i) => {
+      const r = rects[i];
+      let dx = 0;
+      let dy = 0;
+      if (how === "left") dx = minX - r.left;
+      else if (how === "center_h") dx = (minX + maxX) / 2 - (r.left + r.width / 2);
+      else if (how === "right") dx = maxX - (r.left + r.width);
+      else if (how === "top") dy = minY - r.top;
+      else if (how === "center_v") dy = (minY + maxY) / 2 - (r.top + r.height / 2);
+      else if (how === "bottom") dy = maxY - (r.top + r.height);
+      o.set({ left: o.left + dx, top: o.top + dy });
+      o.setCoords();
+    });
+
+    this.setActiveObject(new fabric.ActiveSelection(objects, { canvas: this }));
+    this.requestRenderAll();
+  }
+
+  /** Re-apply handle size and color, after a zoom or accent color change */
+  public refreshHandles() {
+    this.forEachObject((o) => this.applyHandleStyle(o));
+    this.applyHandleStyle(this.getActiveObject());
+    this.requestRenderAll();
   }
 
   /**
@@ -159,6 +347,7 @@ export class CustomCanvas extends fabric.Canvas {
       },
       { cssOnly: true },
     );
+    this.refreshHandles();
     if (this.onZoomChange) {
       this.onZoomChange(this.virtualZoomRatio);
     }

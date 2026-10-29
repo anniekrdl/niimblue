@@ -27,6 +27,7 @@ import { LocalStoragePersistence, writablePersisted } from "$/utils/persistence"
 import { APP_CONFIG_DEFAULTS, CSV_DEFAULT, OBJECT_DEFAULTS_TEXT } from "$/defaults";
 import z from "zod";
 import { FileUtils } from "$/utils/file_utils";
+import { DEFAULT_ACCENT } from "$/utils/accent_colors";
 import { createPrinterInfo } from "@mmote/niimbluelib/dist/cjs/client/abstract_client";
 
 export const fontCache = writable<string[]>([OBJECT_DEFAULTS_TEXT.fontFamily]);
@@ -34,6 +35,7 @@ export const appConfig = writablePersisted<AppConfig>("config", AppConfigSchema,
 export const userIcons = writablePersisted<UserIcon[]>("user_icons", z.array(UserIconSchema), []);
 export const userFonts = writablePersisted<UserFont[]>("user_fonts", z.array(UserFontSchema), []);
 export const loadedFonts = writable<FontFace[]>([]);
+export const accentColor = writablePersisted<string>("accent_color", z.string(), DEFAULT_ACCENT);
 
 export const connectionState = writable<ConnectionState>("disconnected");
 export const connectedPrinterName = writable<string>("");

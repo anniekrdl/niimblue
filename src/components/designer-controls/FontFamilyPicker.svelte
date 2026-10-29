@@ -7,6 +7,7 @@
   import { LocalStoragePersistence } from "$/utils/persistence";
   import { fontCache, userFonts } from "$/stores";
   import FontsMenu from "$/components/designer-controls/FontsMenu.svelte";
+  import GoogleFontsBrowser from "$/components/designer-controls/GoogleFontsBrowser.svelte";
 
   interface Props {
     editRevision?: number;
@@ -18,6 +19,7 @@
 
   let fontQuerySupported = typeof queryLocalFonts !== "undefined";
   let searchString = $state<string>("");
+  let googleFontsShow = $state<boolean>(false);
 
   let systemFontsFiltered = $derived.by<string[]>(() => {
     return $fontCache.filter((e) => e.toLowerCase().includes(searchString.toLowerCase()));
@@ -72,6 +74,12 @@
   <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"></button>
 
   <div class="dropdown-menu">
+    <button class="dropdown-item google-fonts" type="button" onclick={() => (googleFontsShow = true)}>
+      <MdIcon icon="travel_explore" />
+      {$tr("fonts.google.title")}...
+    </button>
+    <div class="dropdown-divider"></div>
+
     <div class="px-3 py-1">
       <input
         type="text"
@@ -110,6 +118,10 @@
   <FontsMenu />
 </div>
 
+{#if googleFontsShow}
+  <GoogleFontsBrowser bind:show={googleFontsShow} onPicked={fontClick} />
+{/if}
+
 <style>
   .font-family-picker {
     width: unset;
@@ -124,7 +136,8 @@
     overflow-y: auto;
   }
 
-  .load-system-fonts {
+  .load-system-fonts,
+  .google-fonts {
     color: var(--bs-primary);
   }
 </style>

@@ -206,8 +206,9 @@
     undo.push(fabricCanvas!, labelProps);
   };
 
-  const onSvgIconPicked = (i: string) => {
-    LabelDesignerObjectHelper.addSvg(fabricCanvas!, i);
+  const onSvgIconPicked = async (i: string) => {
+    const obj = await LabelDesignerObjectHelper.addSvg(fabricCanvas!, i);
+    fabricCanvas!.setActiveObject(obj);
     undo.push(fabricCanvas!, labelProps);
   };
 

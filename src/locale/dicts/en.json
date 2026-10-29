@@ -251,5 +251,11 @@
     "fonts.google.offline": "Google Fonts could not be loaded. Check your internet connection.",
     "fonts.google.more": "Show more",
     "editor.iconpicker.add.help": "SVG, PNG and JPG files, multiple at once. They are kept for next time.",
-    "ui.tool.clear": "Clear"
+    "ui.tool.clear": "Clear",
+    "fonts.google.cat.all": "All",
+    "fonts.google.cat.sans-serif": "Sans serif",
+    "fonts.google.cat.serif": "Serif",
+    "fonts.google.cat.display": "Display",
+    "fonts.google.cat.handwriting": "Handwriting",
+    "fonts.google.cat.monospace": "Monospace"
 }

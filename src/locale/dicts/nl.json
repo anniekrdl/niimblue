@@ -251,5 +251,11 @@
     "fonts.google.offline": "Google Fonts kon niet geladen worden. Controleer je internetverbinding.",
     "fonts.google.more": "Meer tonen",
     "editor.iconpicker.add.help": "SVG-, PNG- en JPG-bestanden, meerdere tegelijk. Ze blijven bewaard voor de volgende keer.",
-    "ui.tool.clear": "Wissen"
+    "ui.tool.clear": "Wissen",
+    "fonts.google.cat.all": "Alle",
+    "fonts.google.cat.sans-serif": "Schreefloos",
+    "fonts.google.cat.serif": "Schreef",
+    "fonts.google.cat.display": "Opvallend",
+    "fonts.google.cat.handwriting": "Handschrift",
+    "fonts.google.cat.monospace": "Monospace"
 }

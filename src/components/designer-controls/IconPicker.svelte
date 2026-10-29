@@ -6,6 +6,7 @@
   import { appConfig, userIcons } from "$/stores";
   import { FileUtils } from "$/utils/file_utils";
   import { Toasts } from "$/utils/toasts";
+  import { iconFileToSvg, pickIconFiles } from "$/utils/icon_import";
 
   interface Props {
     onSubmit: (i: MaterialIcon) => void;
@@ -26,18 +27,34 @@
     }
   };
 
-  const addOwn = async () => {
-    try {
-      let counter = 0;
-      const xmls = await FileUtils.pickAndReadTextFile("svg", true);
-      const iconsToAdd = xmls.map((xml) => ({
-        name: `i_${FileUtils.timestampFloat()}_${counter++}`,
-        data: xml,
-      }));
+  let dragOver = $state<boolean>(false);
 
-      userIcons.update((prev) => [...prev, ...iconsToAdd]);
-    } catch (e) {
-      Toasts.error(e);
+  /** Icons are added one by one, so when storage is full the icons before it are still kept */
+  const addFiles = async (files: File[]) => {
+    let counter = 0;
+    for (const file of files) {
+      try {
+        const data = await iconFileToSvg(file);
+        const icon = { name: `i_${FileUtils.timestampFloat()}_${counter++}`, data };
+        userIcons.update((prev) => [...prev, icon]);
+      } catch (e) {
+        Toasts.error(e);
+        if (e instanceof DOMException && e.name === "QuotaExceededError") {
+          break;
+        }
+      }
+    }
+  };
+
+  const addOwn = async () => {
+    await addFiles(await pickIconFiles());
+  };
+
+  const onDrop = (e: DragEvent) => {
+    e.preventDefault();
+    dragOver = false;
+    if (e.dataTransfer?.files) {
+      addFiles([...e.dataTransfer.files]);
     }
   };
 
@@ -73,9 +90,31 @@
     {#if label}<span class="tool-label">{label}</span>{:else}<MdIcon icon="add" />{/if}
   </button>
 
-  <div class="dropdown-menu">
+  <div
+    class="dropdown-menu {dragOver ? 'drag-over' : ''}"
+    role="region"
+    ondragover={(e) => {
+      e.preventDefault();
+      dragOver = true;
+    }}
+    ondragleave={() => (dragOver = false)}
+    ondrop={onDrop}>
     <h6 class="dropdown-header">{$tr("editor.iconpicker.title")}</h6>
     <div class="p-3">
+      <div class="d-flex gap-1 mb-1">
+        <button class="btn btn-primary flex-grow-1" onclick={addOwn}>
+          <MdIcon icon="upload" />
+          {$tr("editor.iconpicker.add")}
+        </button>
+        <button
+          class="btn {deleteMode ? 'btn-danger' : 'btn-outline-secondary'}"
+          title={$tr("editor.iconpicker.delete_mode")}
+          onclick={() => (deleteMode = !deleteMode)}>
+          <MdIcon icon="delete" />
+        </button>
+      </div>
+      <div class="form-text mb-2">{$tr("editor.iconpicker.add.help")}</div>
+
       <input
         disabled={$appConfig.iconListMode === "user"}
         type="text"
@@ -114,20 +153,6 @@
         {/if}
       </div>
 
-      <div class="input-group input-group-sm mb-1">
-        <button class="btn btn-outline-secondary" onclick={addOwn}>
-          <MdIcon icon="add" />
-
-          {$tr("editor.iconpicker.add")}
-        </button>
-        <button
-          class="btn {deleteMode ? 'btn-danger' : 'btn-outline-secondary'}"
-          onclick={() => (deleteMode = !deleteMode)}>
-          <MdIcon icon="delete" />
-          {$tr("editor.iconpicker.delete_mode")}
-        </button>
-      </div>
-
       <a
         href="https://fonts.google.com/icons?icon.set=Material+Icons&icon.style=Filled"
         target="_blank"
@@ -147,7 +172,17 @@
     max-height: 400px;
     overflow-y: scroll;
   }
+  .user-icon {
+    width: 56px;
+    height: 56px;
+    padding: 4px;
+  }
   .user-icon img {
-    width: 24px;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .dropdown-menu.drag-over {
+    outline: 2px dashed var(--bs-primary);
   }
 </style>

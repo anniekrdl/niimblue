@@ -25,9 +25,10 @@
   interface Props {
     labelProps: LabelProps;
     onChange: (newProps: LabelProps) => void;
+    label?: string;
   }
 
-  let { labelProps, onChange }: Props = $props();
+  let { labelProps, onChange, label }: Props = $props();
 
   const tailPositions: TailPosition[] = ["right", "bottom", "left", "top"];
   const printDirections: PrintDirection[] = ["left", "top"];
@@ -270,6 +271,7 @@
 <div class="dropdown">
   <button class="btn btn-sm btn-secondary" data-bs-toggle="dropdown" data-bs-auto-close="outside">
     <MdIcon icon="settings" />
+    {#if label}<span class="tool-label">{label}</span>{/if}
   </button>
   <div class="dropdown-menu">
     <h6 class="dropdown-header">{$tr("params.label.menu_title")}</h6>

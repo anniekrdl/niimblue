@@ -19,59 +19,57 @@
   let debugStuffShow = $state<boolean>(false);
 </script>
 
-<div class="page-wrapper d-flex flex-column min-vh-100">
-  <div class="container my-2 flex-grow-1">
-    <div class="row align-items-center mb-3">
-      <div class="col">
-        <h1 class="title">
-          <span class="niim">Niim</span><span class="blue">Blue{isStandalone ? "s" : ""}</span>
-        </h1>
-      </div>
-      <div class="col-md-3">
-        <PrinterConnector />
-      </div>
-    </div>
-    <div class="row">
-      <div class="col">
-        <BrowserWarning />
-      </div>
-    </div>
+<div class="app-shell">
+  <header class="app-header">
+    <h1 class="title">
+      <span class="niim">Niim</span><span class="blue">Blue{isStandalone ? "s" : ""}</span>
+    </h1>
 
-    <div class="row">
-      <div class="col">
-        <LabelDesigner />
+    <div class="header-tools">
+      <PrinterConnector />
+
+      <div class="dropdown">
+        <button class="btn btn-sm btn-secondary" data-bs-toggle="dropdown" data-bs-auto-close="outside" title={$tr("ui.app_menu")}>
+          <MdIcon icon="more_vert" />
+        </button>
+        <div class="dropdown-menu dropdown-menu-end app-menu p-3">
+          <label class="form-label text-secondary" for="app-locale">{$tr("ui.language")}</label>
+          <select id="app-locale" class="form-select mb-3" bind:value={$locale}>
+            {#each Object.entries(locales) as [key, name] (key)}
+              <option value={key}>{name}</option>
+            {/each}
+          </select>
+
+          <div class="text-secondary small">
+            {#if appVersion}
+              <a class="text-secondary" href="https://github.com/MultiMote/niimblue/releases/tag/{appVersion}">
+                {appVersion}
+              </a>
+            {:else if appCommit}
+              <a class="text-secondary" href="https://github.com/MultiMote/niimblue/commit/{appCommit}">
+                {appCommit.slice(0, 6)}
+              </a>
+            {/if}
+            {$tr("main.built")}
+            {buildDate}
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mt-2">
+            <a class="text-secondary" href="https://github.com/MultiMote/niimblue">{$tr("main.code")}</a>
+            <button class="text-secondary btn btn-link p-0" onclick={() => (debugStuffShow = true)}>
+              <MdIcon icon="bug_report" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
+  </header>
 
-  <div class="footer text-end text-secondary p-3">
-    <div>
-      <select class="form-select form-select-sm text-secondary d-inline-block w-auto" bind:value={$locale}>
-        {#each Object.entries(locales) as [key, name] (key)}
-          <option value={key}>{name}</option>
-        {/each}
-      </select>
-    </div>
-    <div>
-      {#if appVersion}
-        <a class="text-secondary" href="https://github.com/MultiMote/niimblue/releases/tag/{appVersion}">
-          {appVersion}
-        </a>
-      {:else if appCommit}
-        <a class="text-secondary" href="https://github.com/MultiMote/niimblue/commit/{appCommit}">
-          {appCommit.slice(0, 6)}
-        </a>
-      {/if}
-      {$tr("main.built")}
-      {buildDate}
-    </div>
-    <div>
-      <a class="text-secondary" href="https://github.com/MultiMote/niimblue">{$tr("main.code")}</a>
-      <button class="text-secondary btn btn-link p-0" onclick={() => debugStuffShow = true}>
-        <MdIcon icon="bug_report" />
-      </button>
-    </div>
-  </div>
+  <BrowserWarning />
+
+  <main class="app-main">
+    <LabelDesigner />
+  </main>
 </div>
 
 {#if debugStuffShow}
@@ -79,6 +77,45 @@
 {/if}
 
 <style>
+  .app-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+  }
+
+  .app-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 6px;
+  }
+
+  .title {
+    font-size: 1.5rem;
+    margin: 0;
+    font-weight: 700;
+  }
+
+  .header-tools {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .app-menu {
+    width: 260px;
+  }
+
+  .app-main {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
   .niim {
     color: #ff5349;
   }

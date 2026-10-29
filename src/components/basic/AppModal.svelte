@@ -8,9 +8,10 @@
     onClose?: () => void;
     children: Snippet;
     footer?: Snippet;
+    dialogClass?: string;
   }
 
-  let { show = $bindable(), title, onClose, children, footer }: Props = $props();
+  let { show = $bindable(), title, onClose, children, footer, dialogClass = "" }: Props = $props();
 
   let modalEl: HTMLElement;
   let modal: Modal;
@@ -45,7 +46,7 @@
 </script>
 
 <div bind:this={modalEl} class="modal fade" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered {dialogClass}">
     <div class="modal-content">
       <div class="modal-header">
         <h1 class="modal-title fs-5">{title}</h1>

@@ -36,118 +36,122 @@ export class CustomCanvas extends fabric.Canvas {
     options?: fabric.TOptions<fabric.CanvasOptions>,
   ) {
     super(el, options);
-    this.setupZoomAndPan();
     this.preserveObjectStacking = true;
   }
 
-  private setupZoomAndPan() {
-    this.on("mouse:wheel", (opt) => {
-      const event = opt.e as WheelEvent;
-
-      if (event.ctrlKey) {
-        event.preventDefault();
-
-        const delta = event.deltaY;
-        if (delta > 0) {
+  /**
+   * Gestures inside `area` (scrollable element containing the canvas):
+   * ctrl + wheel (and touchpad pinch) zoom, pinch zoom, two finger pan, one finger pan outside the label.
+   */
+  public bindGestures(area: HTMLElement) {
+    area.addEventListener(
+      "wheel",
+      (e: WheelEvent) => {
+        if (!e.ctrlKey) return;
+        // prevent browser page zoom
+        e.preventDefault();
+        if (e.deltaY > 0) {
           this.virtualZoomOut();
         } else {
           this.virtualZoomIn();
         }
-      }
-    });
+      },
+      { passive: false },
+    );
 
-    const container = this.getElement().parentElement;
-    if (!container) return;
+    const isOnLabel = (target: EventTarget | null) =>
+      target instanceof Node && !!this.getElement().parentElement?.contains(target);
 
     let initialPinchDistance = 0;
     let initialZoom = 1;
-    let lastMidPoint = { x: 0, y: 0 };
+    let lastPoint = { x: 0, y: 0 };
+    let panning = false;
 
-    container.addEventListener(
-        "touchstart",
-        (e: TouchEvent) => {
-          if (e.touches.length === 2) {
-            this.selection = false;
-            this.discardActiveObject();
+    const midPoint = (e: TouchEvent) => ({
+      x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+      y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+    });
 
-            const touch1 = e.touches[0];
-            const touch2 = e.touches[1];
+    const scrollBy = (point: { x: number; y: number }) => {
+      area.scrollLeft -= point.x - lastPoint.x;
+      area.scrollTop -= point.y - lastPoint.y;
+      lastPoint = point;
+    };
 
-            initialPinchDistance = Math.hypot(
-                touch1.clientX - touch2.clientX,
-                touch1.clientY - touch2.clientY,
-            );
-            initialZoom = this.getVirtualZoom();
+    area.addEventListener(
+      "touchstart",
+      (e: TouchEvent) => {
+        if (e.touches.length === 2) {
+          panning = true;
+          this.selection = false;
+          this.discardActiveObject();
+          this.requestRenderAll();
 
-            lastMidPoint = {
-              x: (touch1.clientX + touch2.clientX) / 2,
-              y: (touch1.clientY + touch2.clientY) / 2,
-            };
-          } else if (e.touches.length === 1) {
-
-          }
-        },
-        { passive: false },
+          const touch1 = e.touches[0];
+          const touch2 = e.touches[1];
+          initialPinchDistance = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
+          initialZoom = this.getVirtualZoom();
+          lastPoint = midPoint(e);
+        } else if (e.touches.length === 1 && !isOnLabel(e.target)) {
+          panning = true;
+          lastPoint = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }
+      },
+      { passive: false },
     );
 
-    container.addEventListener(
-        "touchmove",
-        (e: TouchEvent) => {
-          if (e.touches.length === 2) {
-            e.preventDefault();
+    area.addEventListener(
+      "touchmove",
+      (e: TouchEvent) => {
+        if (e.touches.length === 2) {
+          e.preventDefault();
+          const touch1 = e.touches[0];
+          const touch2 = e.touches[1];
+          const currentPinchDistance = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
 
-            const touch1 = e.touches[0];
-            const touch2 = e.touches[1];
-
-            // Zoom
-            const currentPinchDistance = Math.hypot(
-                touch1.clientX - touch2.clientX,
-                touch1.clientY - touch2.clientY,
-            );
-
-            if (initialPinchDistance > 0) {
-              const newZoom = currentPinchDistance / initialPinchDistance * initialZoom;
-              if (Math.abs(newZoom - this.virtualZoomRatio) > 0.02) {
-                if (isFinite(newZoom) && newZoom > 0) {
-                  this.virtualZoom(newZoom);
-                }
-              }
+          if (initialPinchDistance > 0) {
+            const newZoom = (currentPinchDistance / initialPinchDistance) * initialZoom;
+            if (Math.abs(newZoom - this.virtualZoomRatio) > 0.02 && isFinite(newZoom) && newZoom > 0) {
+              this.virtualZoom(newZoom);
             }
-
-            // Pan
-            const currentMidPoint = {
-              x: (touch1.clientX + touch2.clientX) / 2,
-              y: (touch1.clientY + touch2.clientY) / 2,
-            };
-
-            const dx = currentMidPoint.x - lastMidPoint.x;
-            const dy = currentMidPoint.y - lastMidPoint.y;
-
-            const wrapper = this.getElement().closest(".canvas-wrapper");
-            if (wrapper) {
-              wrapper.scrollLeft -= dx;
-              wrapper.scrollTop -= dy;
-            }
-            lastMidPoint = currentMidPoint;
           }
-        },
-        { passive: false },
+
+          scrollBy(midPoint(e));
+        } else if (e.touches.length === 1 && panning && !isOnLabel(e.target)) {
+          e.preventDefault();
+          scrollBy({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+        }
+      },
+      { passive: false },
     );
 
     const stopTouch = (e: TouchEvent) => {
       if (e.touches.length === 0) {
+        panning = false;
         // If not adding this delay, it could happen that objects are selected after zooming/panning
         setTimeout(() => {
           this.selection = true;
         }, 10);
       }
     };
-    container.addEventListener("touchend", stopTouch);
-    container.addEventListener("touchcancel", stopTouch);
+    area.addEventListener("touchend", stopTouch);
+    area.addEventListener("touchcancel", stopTouch);
+  }
+
+  /** Zoom so the whole label fits inside `area` */
+  public fitToArea(area: HTMLElement) {
+    const w = this.getWidth();
+    const h = this.getHeight();
+    const style = getComputedStyle(area);
+    // a few extra pixels for label frame border
+    const availW = area.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - 6;
+    const availH = area.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom) - 6;
+    if (!w || !h || availW <= 0 || availH <= 0) return;
+    this.virtualZoom(Math.min(availW / w, availH / h));
   }
 
   public virtualZoom(newZoom: number) {
-    this.virtualZoomRatio = Math.min(Math.max(0.25, newZoom), 4);
+    this.virtualZoomRatio = Math.min(Math.max(0.1, newZoom), 6);
     this.setDimensions(
       {
         width: this.virtualZoomRatio * this.getWidth() + "px",

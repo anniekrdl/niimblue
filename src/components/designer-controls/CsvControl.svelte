@@ -8,9 +8,10 @@
   interface Props {
     enabled: boolean;
     onPlaceholderPicked: (name: string) => void;
+    label?: string;
   }
 
-  let { enabled = $bindable(), onPlaceholderPicked }: Props = $props();
+  let { enabled = $bindable(), onPlaceholderPicked, label }: Props = $props();
 
   let placeholders = $state<string[]>([]);
   let rows = $state<number>(0);
@@ -33,6 +34,7 @@
     data-bs-auto-close="outside"
     title={$tr("params.csv.title")}>
     <MdIcon icon="dataset" />
+    {#if label}<span class="tool-label">{label}</span>{/if}
   </button>
   <div class="dropdown-menu">
     <h6 class="dropdown-header">{$tr("params.csv.title")}</h6>

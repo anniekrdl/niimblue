@@ -16,9 +16,10 @@
     onLoadRequested: (label: ExportedLabelTemplate) => void;
     canvas: fabric.Canvas;
     csvEnabled: boolean;
+    label?: string;
   }
 
-  let { onRequestLabelTemplate, onLoadRequested, canvas, csvEnabled }: Props = $props();
+  let { onRequestLabelTemplate, onLoadRequested, canvas, csvEnabled, label }: Props = $props();
 
   let dropdownRef: HTMLDivElement;
   let savedLabels = $state<ExportedLabelTemplate[]>([]);
@@ -198,12 +199,19 @@
   onMount(() => {
     savedLabels = LocalStoragePersistence.loadLabels();
     calcUsedSpace();
+
+    // labels may be saved from other places (templates menu)
+    dropdownRef.parentElement?.addEventListener("show.bs.dropdown", () => {
+      savedLabels = LocalStoragePersistence.loadLabels();
+      calcUsedSpace();
+    });
   });
 </script>
 
 <div class="dropdown">
   <button class="btn btn-sm btn-secondary" data-bs-toggle="dropdown" data-bs-auto-close="outside">
     <MdIcon icon="sd_storage" />
+    {#if label}<span class="tool-label">{label}</span>{/if}
   </button>
   <div class="saved-labels dropdown-menu" bind:this={dropdownRef}>
     <h6 class="dropdown-header text-wrap">

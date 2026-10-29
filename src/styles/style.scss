@@ -136,6 +136,14 @@ body {
   min-height: 48px;
 }
 
+/* mouse users can not swipe, wrap instead of horizontal scroll */
+@media (min-width: 768px) {
+  .np-toolbar.props-bar {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+}
+
 .add-bar {
   justify-content: space-between;
   padding: 6px;

@@ -289,8 +289,8 @@
         disabled={$connectionState === "connecting"}
         class="btn text-nowrap {connectionType === 'capacitor-ble' ? 'btn-light' : 'btn-outline-secondary'}"
         onclick={() => switchConnectionType((connectionType = "capacitor-ble"))}>
-        <MdIcon icon="usb" />
-        Capacitor BLE
+        <MdIcon icon="bluetooth" />
+        {$tr("connector.bluetooth")}
       </button>
     {/if}
   {/if}

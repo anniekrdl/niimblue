@@ -32,7 +32,8 @@
   let category = $state<GoogleFontCategory | "all">("all");
   let limit = $state<number>(PAGE_SIZE);
   let installing = $state<string>("");
-  /** Preview stylesheets already added to the page */
+  /** Preview stylesheets already added to the page, intentionally not reactive */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity
   const previewLoaded = new Set<string>();
 
   let filtered = $derived.by(() => {

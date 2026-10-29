@@ -83,7 +83,7 @@
     height: 100dvh;
     max-width: 1100px;
     margin: 0 auto;
-    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    padding: calc(6px + env(safe-area-inset-top)) 8px calc(6px + env(safe-area-inset-bottom));
   }
 
   .app-header {
